@@ -1,7 +1,7 @@
 /*Thomas Boehme
 *started:         6/27/2016
-*last edidted:    7/17/2016  --edits were cleaning up comments
-*finished:        7/14/2016  --first part
+*last edidted:    9/23/2016  --
+*finished:        9/23/2016  --beginnings of using Stats class and job specific functions
 */
 
 /*Allows one to calculate damage and other effects
@@ -49,17 +49,11 @@ public class RollCalculator{
    private String charRace;      //gets the player's race
    private int charLevel;        //gets the player's level
    
-   private int strength;      //gets the player's STR
-   private int constitution;  //gets the player's CON
-   private int dexterity;     //gets the player's DEX
-   private int intelligence;  //gets the player's INT
-   private int wisdom;        //gets the player's WIS
-   private int charisma;      //gets the player's CHA
-   private String statsStr;   //puts all stats in a string
+   private int[] st;
    
    private String charWeapon;    //gets the player's weapon name for now, weapon prof as int later
    
-   private CharacterHeroic character;
+   private Heroic_4e character;
    private WeaponCheck weapon;
    private int weaponProf;
    
@@ -81,52 +75,18 @@ public class RollCalculator{
                charRace = characterRaceDisplay.characterRaceButtons.getSelection().getActionCommand();      //gets race
                charWeapon = weaponDisplay.weaponChoice.getSelection().getActionCommand();                  //gets weapon name
                
-               if (characterLevelDisplay.level_TF.getText().equals("")){         //gets level
-                  infoBox("No level entered", "Submit Level button");
+               charLevel = findLevel(characterLevelDisplay);      //gets level
+               if (charLevel == 0){          //checks if level is valid level, 0 if not valid level
                   break; 
-               }else{
-                  charLevel = Integer.parseInt(characterLevelDisplay.level_TF.getText());
-                  if (!(charLevel > 0 && charLevel < 31)){
-                     infoBox(charLevel + " is not a valid level", "Submit Level button");
-                     break;
-                  }
                }
-               //checks for the stats
-               if (statsDisplay.strength_TF.getText().equals("")){            //for STR
-                  infoBox("No STR entered", "Submit Stats button");
+               //checks for the stats and returns array of 0's on failure
+               st = findStats(statsDisplay);    //gets the stats
+               if (st[0] == 0){                 //checks if there was a failure
                   break;
-               }else if (statsDisplay.constitution_TF.getText().equals("")){  //for CON
-                  infoBox("No CON entered", "Submit Stats button");
-                  break;
-               }else if (statsDisplay.dexterity_TF.getText().equals("")){     //for DEX
-                  infoBox("No DEX entered", "Submit Stats button");
-                  break;
-               }else if (statsDisplay.intelligence_TF.getText().equals("")){  //for INT
-                  infoBox("No INT entered", "Submit Stats button");
-                  break;
-               }else if (statsDisplay.wisdom_TF.getText().equals("")){        //for WIS
-                  infoBox("No WIS entered", "Submit Stats button");
-                  break;
-               }else if (statsDisplay.charisma_TF.getText().equals("")){      //for CHA
-                  infoBox("No CHA entered", "Submit Stats button");
-                  break;
-               }else{               //creates a stats string
-                  strength = Integer.parseInt(statsDisplay.strength_TF.getText());
-                  constitution = Integer.parseInt(statsDisplay.constitution_TF.getText());
-                  dexterity = Integer.parseInt(statsDisplay.dexterity_TF.getText());
-                  intelligence = Integer.parseInt(statsDisplay.intelligence_TF.getText());
-                  wisdom = Integer.parseInt(statsDisplay.wisdom_TF.getText());
-                  charisma = Integer.parseInt(statsDisplay.charisma_TF.getText());
-                  //makes a string for the stats
-                  statsStr = "STR: " + strength + "\t\t" + " Mod: " + abilityModCalc(strength) +
-                     "\nCON: " + constitution + "\t\t" +  " Mod: " + abilityModCalc(constitution) +
-                     "\nDEX: " + dexterity + "\t\t" + " Mod: " + abilityModCalc(dexterity) +
-                     "\nINT: " + intelligence + "\t\t" + " Mod: " + abilityModCalc(intelligence) +
-                     "\nWIS: " + wisdom + "\t\t" + " Mod: " + abilityModCalc(wisdom) +
-                     "\nCHA: " + charisma + "\t\t" + " Mod: " + abilityModCalc(charisma);
                }
-               character = new CharacterHeroic(charLevel, charClass, charRace, strength,    //sends info down to character to run calcs
-                  constitution, dexterity, intelligence, wisdom, charisma);
+               Stats stats = new Stats(st);
+               
+               character = new Heroic_4e(charLevel, charClass, charRace, stats);    //sends info down to character to run calcs
                weapon = new WeaponCheck(charWeapon);                                         //allow for weapon checks
                character.checkWeaponProf(charWeapon, weapon.getWeaponType());
                character.setWeaponProf(weapon.getWeaponProficiency());
@@ -142,14 +102,69 @@ public class RollCalculator{
       JOptionPane.showMessageDialog(null, message, "Infobox: " + title, JOptionPane.INFORMATION_MESSAGE);
    }
    //shows the character info when asked
-   public static void calcInfoBox(CharacterHeroic character, String title){
+   public static void calcInfoBox(Heroic_4e character, String title){
       JOptionPane.showMessageDialog(null, character.toString(), "CharCalcInfoBox: " + title, JOptionPane.INFORMATION_MESSAGE);
    }
    //returns the panel currently being used
    private JComponent getMainComponent(){
       return mainPanel;
    }
-   //returns ability score modifiers, to be moved to CharacterHeroic class
+   
+   public int findLevel(CharacterLevelDisplay display){
+      int level;
+      if (display.level_TF.getText().equals("")){                    //checks if level is valid level
+         infoBox("No level entered", "Submit Level button");         //display issue
+         return 0;                                                   //return 0 for failure
+      }else{
+         level = Integer.parseInt(display.level_TF.getText());                  //gets given level
+         if (!(level > 0 && level < 31)){                                   //checks if leve is valid
+            infoBox(level + " is not a valid level", "Submit Level button");    //when fails state problem
+            return 0;                                                               //return 0 for failure
+         }
+      }
+      return level;
+   }
+   
+   public int[] findStats(StatsDisplay display){
+      int[] stats = new int[6];
+      if (display.strength_TF.getText().equals("")){            //for STR
+         infoBox("No STR entered", "Submit Stats button");
+         return failedStats();                                  //failure
+      }else if (display.constitution_TF.getText().equals("")){  //for CON
+         infoBox("No CON entered", "Submit Stats button");
+         return failedStats();                                   //failure
+      }else if (display.dexterity_TF.getText().equals("")){     //for DEX
+         infoBox("No DEX entered", "Submit Stats button");
+         return failedStats();                                  //failure
+      }else if (display.intelligence_TF.getText().equals("")){  //for INT
+         infoBox("No INT entered", "Submit Stats button");
+         return failedStats();                                  //failure
+      }else if (display.wisdom_TF.getText().equals("")){        //for WIS
+         infoBox("No WIS entered", "Submit Stats button");
+         return failedStats();                                  //failure
+      }else if (display.charisma_TF.getText().equals("")){      //for CHA
+         infoBox("No CHA entered", "Submit Stats button");
+         return failedStats();                                  //failure
+      }else{               //creates a stats array
+         stats[0] = Integer.parseInt(statsDisplay.strength_TF.getText());        //strength
+         stats[1] = Integer.parseInt(statsDisplay.constitution_TF.getText());    //constitution
+         stats[2] = Integer.parseInt(statsDisplay.dexterity_TF.getText());       //dexterity
+         stats[3] = Integer.parseInt(statsDisplay.intelligence_TF.getText());    //intelligence
+         stats[4] = Integer.parseInt(statsDisplay.wisdom_TF.getText());          //wisdom
+         stats[5] = Integer.parseInt(statsDisplay.charisma_TF.getText());        //charisma
+         return stats;
+      }
+   }
+   
+   public int[] failedStats(){
+      int[] failed = new int[6];
+      for(int i = 0; i < 6; i++){
+         failed[i] = 0;
+      }
+      return failed;
+   }
+   
+   //returns ability score modifiers, to be moved to Heroic_4e class
    public static int abilityModCalc(int abilityScore){
       int abilityMod;
       abilityMod = (abilityScore-10)/2;

@@ -1,6 +1,6 @@
 /*Thomas Boehme
 *RollCalculator program
-*CharacterHeroic class
+*Heroic_4e class
 *will do calculations on the character when needed
 */
 
@@ -8,23 +8,25 @@
 *these will exend from each other
 
 /*created on: 7/7/2016
-*last edited: 7/17/2016
+*last edited: 9/23/2016    --added in the Stats object and created and implement abstaract class
 */
 
 //package
 package DnD_RollCalculator;
 
-class CharacterHeroic{
+abstract class Character{              //so that I can use this as a base for all other editions of D&D later on
+   private int charLevel;
+   private String charClass;
+   private String charRace;
+   private Stats charStats;
+}
+
+class Heroic_4e extends Character{
    private int charLevel;              //character generic info
    private String charClass;
    private String charRace;
    
-   private int charSTR;                //character stats
-   private int charCON;
-   private int charDEX;
-   private int charINT;
-   private int charWIS;
-   private int charCHA;
+   private Stats charStats;
    
    private String[] weaponProf = new String[7];   //characer wepaon profs
    private String charWeapon;
@@ -32,18 +34,12 @@ class CharacterHeroic{
    private int charWeaponProf;
    private boolean charProfInWeapon;
    
-   public CharacterHeroic(int ch_level, String ch_class, String ch_race, int ch_STR,            //initializer
-                           int ch_CON, int ch_DEX, int ch_INT, int ch_WIS, int ch_CHA){
+   public Heroic_4e(int ch_level, String ch_class, String ch_race, Stats ch_stats){    //initializer
       
       this.charLevel = ch_level;          //sets values of needed variables
       this.charClass = ch_class;
       this.charRace = ch_race;
-      this.charSTR = ch_STR;
-      this.charCON = ch_CON;
-      this.charDEX = ch_DEX;
-      this.charINT = ch_INT;
-      this.charWIS = ch_WIS;
-      this.charCHA = ch_CHA;
+      this.charStats = ch_stats;
       
       getWeaponProfs();                //gets weapon proficiency 
    }
@@ -105,24 +101,7 @@ class CharacterHeroic{
       this.charRace = ch_race;
       getWeaponProfs();    //resets the weaponProf
    }
-   public void setCharSTR(int ch_STR){             //character strength
-      this.charSTR = ch_STR;
-   }
-   public void setCharCON(int ch_CON){             //character constitution
-      this.charCON = ch_CON;
-   }
-   public void setCharDEX(int ch_DEX){             //character dexterity 
-      this.charDEX = ch_DEX;
-   }
-   public void setCharINT(int ch_INT){             //character intelligence
-      this.charINT = ch_INT;
-   }
-   public void setCharWIS(int ch_WIS){             //character wisdom
-      this.charWIS = ch_WIS;
-   }
-   public void setCharCHA(int ch_CHA){             //character charisma
-      this.charCHA = ch_CHA;
-   }
+   
    public void setWeapon(String ch_weapon){           //character weapon
       this.charWeapon = ch_weapon;
    }
@@ -142,24 +121,7 @@ class CharacterHeroic{
    public String getCharRace(){                      //return race
       return charRace;
    }
-   public int getCharSTR(){                      //return strength
-      return charSTR;
-   }
-   public int getCharCON(){                      //return constitution
-      return charCON;
-   }
-   public int getCharDEX(){                      //return dexterity
-      return charDEX;
-   }
-   public int getCharINT(){                      //return intelligence
-      return charINT;
-   }
-   public int getCharWIS(){                      //return wisdom
-      return charWIS;
-   }
-   public int getCharCHA(){                      //return charisma
-      return charCHA;
-   }
+   
    public String getCharWeapon(){               //return weapon
       return charWeapon;
    }
@@ -188,20 +150,11 @@ class CharacterHeroic{
    //returns string information
    public String toString(){
       String message = "Class: " + charClass + "\nRace: " + charRace + "\nLevel: " +
-         charLevel + "\n" + statsString() + "\nWeapon : " + charWeapon + "\nWeapon Attack: " +
+         charLevel + "\n" + charStats.toString() + "\nWeapon : " + charWeapon + "\nWeapon Attack: " +
          weaponAttackString();
       return message;
    }
-   //returns stat roll modifiers for generic rolls and non-weapon attack rolls
-   private String statsString(){
-      String stats = "STR: " + ((charLevel/2) + abilityModCalc(charSTR)) +
-                     "\nCON: " + ((charLevel/2) + abilityModCalc(charCON)) +
-                     "\nDEX: " + ((charLevel/2) + abilityModCalc(charDEX)) +
-                     "\nINT: " + ((charLevel/2) + abilityModCalc(charINT)) +
-                     "\nWIS: " + ((charLevel/2) + abilityModCalc(charWIS)) +
-                     "\nCHA: " + ((charLevel/2) + abilityModCalc(charCHA));
-      return stats;
-   }
+   
    private int abilityModCalc(int stat){
       int abilityMod;
       abilityMod = (stat-10)/2;
@@ -214,26 +167,26 @@ class CharacterHeroic{
       if ((charWeaponType == "Simple Melee" || charWeaponType == "Military Melee" || charWeaponType == "Superior Melee") &&
          charProfInWeapon){
          //with proficiency
-         roll = (charLevel/2) + abilityModCalc(charSTR) + charWeaponProf;
+         roll = (charLevel/2) + abilityModCalc(charStats.getStrength()) + charWeaponProf;
          return roll;
       }else if (charWeaponType == "Simple Melee" || charWeaponType == "Military Melee" || charWeaponType == "Superior Melee"){
          //without proficiency
-         roll = (charLevel/2) + abilityModCalc(charSTR);
+         roll = (charLevel/2) + abilityModCalc(charStats.getStrength());
          return roll;
       }else if ((charWeaponType == "Simple Ranged" || charWeaponType == "Military Ranged" || charWeaponType == "Superior Ranged") &&
          charProfInWeapon){         //for if the character has a ranged weapon
          //with proficiency
-         roll = (charLevel/2) + abilityModCalc(charDEX) + charWeaponProf;
+         roll = (charLevel/2) + abilityModCalc(charStats.getDexterity()) + charWeaponProf;
          return roll;
       }else if (charWeaponType == "Simple Ranged" || charWeaponType == "Military Ranged" || charWeaponType == "Superior Ranged"){
          //without proficiency
-         roll = (charLevel/2) + abilityModCalc(charDEX);
+         roll = (charLevel/2) + abilityModCalc(charStats.getDexterity());
          return roll;
       }else if (charWeapon == "Improvized Melee" || charWeapon == "Unarmed"){//for if the character is using an improvized weaponif it is melee
-         roll = (charLevel/2) + abilityModCalc(charSTR);    //if it is melee
+         roll = (charLevel/2) + abilityModCalc(charStats.getStrength());    //if it is melee
          return roll;
       }else{            //if it is ranged
-         roll = (charLevel/2) + abilityModCalc(charDEX);
+         roll = (charLevel/2) + abilityModCalc(charStats.getDexterity());
          return roll;
       }
    }
